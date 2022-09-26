@@ -1,0 +1,29 @@
+# This is a sample build configuration for JavaScript.
+# Check our guides at https://confluence.atlassian.com/x/14UWN for more examples.
+# Only use spaces to indent your .yml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: node:10.15.3
+
+pipelines:
+  branches:
+    test: #name of your test branch
+    - step:
+          image: node:10.15.3
+          caches:
+            - node
+            - gradle
+          script: # Modify the commands below to build your repository.
+            #env preperation
+            - npm install
+    - step:
+          image: mingc/android-build-box:latest
+          caches:
+            - node
+          script: # Modify the commands below to build your repository
+            #build
+            - cd ./android
+            - chmod +x gradlew
+            - ./gradlew assembleRelease
+            - ls -R
+            - curl -X POST "https://${BITBUCKET_USERNAME}:${BITBUCKET_APP_PASSWORD}@api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"./app/build/outputs/apk/release/app-release.apk"

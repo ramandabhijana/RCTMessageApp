@@ -6,37 +6,19 @@
  * @flow strict-local
  */
 
-import React, { useMemo, useEffect } from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  StatusBar,
-} from 'react-native';
+import React from 'react';
 
-import {
-  Header,
-  LearnMoreLinks,
-  Colors,
-  DebugInstructions,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-import { ThemeProvider, Icon } from 'react-native-elements';
 import commonReducer from './src/reducers/commonReducers';
 import * as RNLocalize from 'react-native-localize'
 import i18n from 'i18n-js'
 import { applyMiddleware, combineReducers, createStore } from 'redux';
-import { Provider, useSelector } from 'react-redux';
 import ReduxThunk from 'redux-thunk'
-import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator } from '@react-navigation/stack';
-
-import HomeScreen from './src/views/HomeScreen'
 import translate from './src/locales/translate'
+import Colors from './src/constants/Colors';
+import { AuthStack } from './src/navigations/AuthNavigator';
+import { getAccessToken } from './src/services/AuthService';
+import { RootStack } from './src/views/RootPageScreen';
 
 const rootReducer = combineReducers({
   commonReducer: commonReducer,
@@ -68,12 +50,11 @@ const setI18nConfig = () => {
   i18n.locale = languageTag
 }
 
-const Stack = createStackNavigator();
 export const AuthContext = React.createContext();
 
+const App = () => {
 
-
-const App: () => React$Node = () => {
+  setI18nConfig()
 
   const [state, dispatch] = React.useReducer(
     (prevState, action) => {
@@ -109,15 +90,27 @@ const App: () => React$Node = () => {
     }
   );
 
+  React.useEffect(() => {
+    const bootstrapAsync = async () => {
+      let userToken;
+      try {
+        userToken = await getAccessToken()
+      } catch (e) {
+        // Restoring token failed
+      }
+      // This will switch to the App screen or Auth screen and this loading
+      // screen will be unmounted and thrown away.
+      dispatch({ type: 'RESTORE_TOKEN', token: userToken });
+    };
 
-  setI18nConfig()
+    bootstrapAsync();
+  }, []);
 
-  const authContextValue = useMemo(
+  const authContextValue = React.useMemo(
     () => ({
-      signIn: async data => {
+      signIn: async token => {
         try {
-          const uid = await AsyncStorage.getItem(StorageKey.KEY_USER_ID)
-          dispatch({ type: 'SIGN_IN', token: uid });
+          dispatch({ type: 'SIGN_IN', token: token });
         } catch (err) {
           console.log(err)
         }
@@ -132,51 +125,12 @@ const App: () => React$Node = () => {
     []
   );
 
-  useEffect(() => {
-    // SplashScreen.hide();
-
-    const bootstrapAsync = async () => {
-      let userToken;
-
-      try {
-        userToken = await AsyncStorage.getItem(StorageKey.KEY_USER_ID);
-        console.log('token' + userToken)
-      } catch (e) {
-        // Restoring token failed
-        console.log(e)
-      }
-
-      dispatch({ type: 'RESTORE_TOKEN', token: userToken });
-    };
-
-    bootstrapAsync();
-
-  }, [])
-
-
-
   return (
-    <SafeAreaProvider>
-      <ThemeProvider
-        theme={theme}>
-        <Provider store={store}>
-          <NavigationContainer>
-            <AuthContext.Provider value={authContextValue}>
-              <Stack.Navigator>
-                {
-                  state.userToken ? (
-                    <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-                  ) : (
-                      <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-                    )
-                }
-              </Stack.Navigator>
-            </AuthContext.Provider>
-          </NavigationContainer>
-        </Provider>
-      </ThemeProvider>
-    </SafeAreaProvider>
-
+    <AuthContext.Provider value={authContextValue}>
+      <NavigationContainer>
+        {state.userToken == null ? (<AuthStack/>) : (<RootStack/>)}
+      </NavigationContainer>
+    </AuthContext.Provider>
   );
 };
 

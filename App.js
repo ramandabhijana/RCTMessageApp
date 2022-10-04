@@ -19,6 +19,7 @@ import Colors from './src/constants/Colors';
 import { AuthStack } from './src/navigations/AuthNavigator';
 import { getAccessToken } from './src/services/AuthService';
 import { RootStack } from './src/views/RootPageScreen';
+import { StatusBar } from 'react-native';
 
 const rootReducer = combineReducers({
   commonReducer: commonReducer,

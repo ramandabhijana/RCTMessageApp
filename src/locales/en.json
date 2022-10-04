@@ -5,5 +5,7 @@
     "app_name": "Training App",
     "email": "Email",
     "password": "Password",
-    "userName": "User Name"
+    "userName": "User Name",
+    "ok": "OK",
+    "cancel": "Cancel"
 }

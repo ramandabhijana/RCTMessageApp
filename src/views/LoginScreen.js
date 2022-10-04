@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from "react-native";
+import { View, Text } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { INPUTS_TO_BTN_SPACING } from "../constants/Numbers";
 import Keys from '../constants/Keys';
@@ -12,11 +12,13 @@ import * as yup from 'yup'
 import { AuthContext } from '../../App';
 import { signIn as login }  from '../services/AuthService';
 import { SUCCESS_STATUS_CODE } from '../services/NetworkService';
-import { eachHasValue, showErrorAlert } from '../actions/commonActions';
+import { showAlert } from '../actions/commonActions';
 import { Formik } from 'formik';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { useRef } from 'react';
+import CustomHeader from '../components/molecules/CustomHeader';
+import DialogManager from 'react-native-dialog-component/';
 
 const signInValidationSchema = yup.object().shape({
     email: yup
@@ -30,8 +32,10 @@ const signInValidationSchema = yup.object().shape({
         .max(10, ({ max }) => `Password must not be more than ${max} characters`)
 })
 
-const LoginScreen = () => { 
+const LoginScreen = ({ navigation }) => { 
     const [isLoading, setLoading] = useState(false)
+    const [submitCount, setSubmitCount] = useState(0)
+
     const { signIn } = React.useContext(AuthContext)
     const componentMounted = useRef(true)
     
@@ -44,7 +48,9 @@ const LoginScreen = () => {
                 signIn({ token })
             }
         } catch (error) { 
-            showErrorAlert(error)
+            showAlert(error.message, false, () => {
+                onDismissErrorAlert()
+            }, false, 'Dismiss')
         } finally { 
             if (componentMounted.current) { 
                 setLoading(false)
@@ -52,19 +58,30 @@ const LoginScreen = () => {
         }
     }
 
+    const onDismissErrorAlert = () => {
+        DialogManager.dismiss()
+        setLoading(false)
+    }
+
     useEffect(() => {
         componentMounted.current = false
     }, []);
 
     return (
+        <>
+        <CustomHeader 
+        title={translate(Keys.login)}
+        onPressBack={() => navigation.goBack()}
+        />
         <KeyboardAwareScrollView style={styles.container}>
                 <SafeAreaView edges={['left', 'right', 'bottom']}>
                     <Formik
-                        validateOnChange={true}
+                        validateOnChange={submitCount > 0}
+                        
                         validationSchema={signInValidationSchema}
                         initialValues={{email: '', password: ''}}
                         >
-                        {({handleChange, handleBlur, handleSubmit, values, errors, isValid}) => (
+                        {({handleChange, handleBlur, validateForm, values, errors, isValid}) => (
                             <>
                                 <TextInputField
                                     label={translate(Keys.email)}
@@ -87,8 +104,17 @@ const LoginScreen = () => {
                                 <View style={{marginBottom: INPUTS_TO_BTN_SPACING}}/>
                                 <PrimaryButton 
                                     title={translate(Keys.login)}
-                                    disabled={!isValid || !eachHasValue(values) || isLoading}
-                                    onPress={() => onTapSignInButton(values) }
+                                    disabled={!isValid || isLoading}
+                                    onPress={() => {
+                                        setSubmitCount(currentSubmitCount => {
+                                            if (currentSubmitCount == 0) { 
+                                                validateForm()
+                                            }
+                                            return currentSubmitCount + 1
+                                        })
+                                        
+                                        onTapSignInButton(values)
+                                    }}
                                     isLoading={isLoading}
                                 />
                             </>
@@ -96,7 +122,7 @@ const LoginScreen = () => {
                     </Formik>
                 </SafeAreaView>
         </KeyboardAwareScrollView>
-        
+        </>
     )
 }
 

@@ -9,12 +9,17 @@ const TextInputField = (props) => {
             label={props.label}
             labelStyle={{
                 color: 'black',
+                fontWeight: '400',
+                fontSize: 14
             }}
             placeholder={props.placeholder}
             errorStyle={{ color: Colors.error }}
             errorMessage={props.errorMessage}
             containerStyle={{
-                marginVertical: 8
+                marginVertical: 10
+            }}
+            inputStyle={{
+                paddingLeft: 8
             }}
             keyboardType={props.keyboardType}
             onChangeText={props.onChangeText}

@@ -1,20 +1,25 @@
 import React from 'react';
 import { View, Text, StatusBar, StyleSheet } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import PrimaryButton from "../components/atoms/PrimaryButton";
 import SecondaryButton from "../components/atoms/SecondaryButton";
 import Keys from '../constants/Keys';
 import { STANDARD_VIEW_SPACING } from "../constants/Numbers";
 import translate from "../locales/translate";
+import CustomStatusBar from '../components/atoms/CustomStatusBar';
+import Colors from '../constants/Colors';
 
 const TopScreen = ({ navigation }) => { 
     return (
         <>
-            <StatusBar/>
-            <SafeAreaView style={styles.topScreenContainer}>
-                <Text style={styles.appNameText}>{translate(Keys.appName)}</Text>
-                <Buttons navigation={navigation}/>
-            </SafeAreaView>
+            <SafeAreaProvider>
+                <CustomStatusBar backgroundColor={Colors.accent} />
+                
+                <SafeAreaView style={styles.topScreenContainer}>
+                    <Text style={styles.appNameText}>{translate(Keys.appName)}</Text>
+                    <Buttons navigation={navigation}/>
+                </SafeAreaView>
+            </SafeAreaProvider>
         </>
     )
 }

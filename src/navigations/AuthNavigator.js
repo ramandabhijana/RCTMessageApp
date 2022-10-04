@@ -6,6 +6,8 @@ import RegisterScreen from "../views/RegisterScreen";
 import translate from '../locales/translate';
 import Keys from '../constants/Keys';
 import { STANDARD_VIEW_SPACING } from '../constants/Numbers';
+import Colors from '../constants/Colors';
+import { StatusBar } from 'react-native';
 
 const {Navigator, Screen} = createStackNavigator()
 
@@ -18,6 +20,7 @@ export const AuthStack = () => {
     return (
         <Navigator 
             screenOptions={{
+                headerShown: false,
                 cardStyle: {
                     paddingBottom: STANDARD_VIEW_SPACING,
                     backgroundColor: 'white',
@@ -27,24 +30,19 @@ export const AuthStack = () => {
             <Screen 
                 name="TopScreen"
                 component={TopScreen}
-                options={{headerShown: false}}
+                options={baseStackNavOptions}
             />
             <Screen 
                 name="LoginScreen"
                 component={LoginScreen}
-                options={{
-                    ...baseStackNavOptions,
-                    title: translate(Keys.login),
-                }}
+                options={baseStackNavOptions}
                 />
             <Screen 
                 name="RegisterScreen" 
                 component={RegisterScreen}
-                options={{
-                    ...baseStackNavOptions,
-                    title: translate(Keys.register),
-                }}
+                options={baseStackNavOptions}
                 />
         </Navigator>
+        
     )
 }

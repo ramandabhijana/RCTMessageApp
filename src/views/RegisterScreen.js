@@ -12,8 +12,10 @@ import { signUp } from '../services/AuthService';
 import { Formik } from 'formik';
 import * as yup from 'yup'
 import { SUCCESS_STATUS_CODE } from '../services/NetworkService';
-import { eachHasValue, showErrorAlert, showInfoAlert } from '../actions/commonActions';
+import { showAlert } from '../actions/commonActions';
 import { AuthContext } from '../../App';
+import CustomHeader from '../components/molecules/CustomHeader';
+import DialogManager from 'react-native-dialog-component';
 
 const registerValidationSchema = yup.object().shape({
     name: yup
@@ -31,8 +33,9 @@ const registerValidationSchema = yup.object().shape({
         .max(10, ({ max }) => `Password must not be more than ${max} characters`)
 })
 
-const RegisterScreen = () => { 
+const RegisterScreen = ({ navigation }) => { 
     const [isLoading, setLoading] = useState(false)
+    const [submitCount, setSubmitCount] = useState(0)
     const { signIn } = React.useContext(AuthContext)
 
     const onTapRegisterButton = async (name, email, password) => { 
@@ -41,32 +44,36 @@ const RegisterScreen = () => {
             const response = await signUp(name, email, password)
             if (response.data.status == SUCCESS_STATUS_CODE) { 
                 const token = response.data.accessToken
-                showInfoAlert(
-                    'Account Created', 
-                    'We have set up a new account for you!', 
-                    [{
-                        text: "OK",
-                        onPress: () => signIn({ token })
-                    }],
-                )
+                showAlert('Account Created', false, () => {
+                    DialogManager.dismiss()
+                    signIn({ token })
+                }, false, null, null)
             }
         } catch (error) {
-            showErrorAlert(error)
-        } finally { 
-            setLoading(false)
-        }
+            showAlert(error.message, false, () => { finishLoading() }, false, 'Dismiss')
+        } 
+    }
+
+    const finishLoading = () => {
+        DialogManager.dismiss() 
+        setLoading(false)
     }
 
     return (
+        <>
+        <CustomHeader
+            title={translate(Keys.register)}
+            onPressBack={() => navigation.goBack()}
+        />
         <KeyboardAwareScrollView style={styles.container}>
             <SafeAreaView edges={['left', 'right', 'bottom']}>
                 <Formik 
-                    validateOnChange={true}
+                    validateOnChange={submitCount > 0}
                     validationSchema={registerValidationSchema}
                     initialValues={{name: '', email: '', password: ''}}
                     onSubmit={values => console.log(values)}
                     >
-                    {({handleChange, handleBlur, handleSubmit, values, errors, isValid}) => (
+                    {({handleChange, handleBlur, validateForm, values, errors, isValid}) => (
                         <>
                             <TextInputField 
                                 label={translate(Keys.userName)}
@@ -98,10 +105,16 @@ const RegisterScreen = () => {
                             <View style={{marginBottom: INPUTS_TO_BTN_SPACING}}/>
                             <PrimaryButton 
                                 title={translate(Keys.register)}
-                                disabled={!isValid || !eachHasValue(values) || isLoading}
-                                onPress={() =>
+                                disabled={!isValid || isLoading}
+                                onPress={() => { 
+                                    setSubmitCount(currentSubmitCount => { 
+                                        if (currentSubmitCount == 0) { 
+                                            validateForm()
+                                        }
+                                        return currentSubmitCount + 1
+                                    })
                                     onTapRegisterButton(values.name, values.email, values.password)
-                                }
+                                }}
                                 isLoading={isLoading}
                             />
                         </>
@@ -110,6 +123,7 @@ const RegisterScreen = () => {
             </SafeAreaView>
             
         </KeyboardAwareScrollView>
+        </>
     )
 }
 

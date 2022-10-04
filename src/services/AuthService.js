@@ -1,19 +1,18 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import axios from "axios"
-import { BASE_URL, DEFAULT_LANG, handleErrorResponse, SUCCESS_STATUS_CODE } from "./NetworkService"
+import { BASE_URL, DEFAULT_LANG, getClient, handleErrorResponse } from "./NetworkService"
 
 const AUTH_DATA_KEY = 'auth_data'
 
 export const signUp = async (name, email, password) => { 
     const url = BASE_URL.concat('/SignUpCtrl/SignUp')
-    const response = await axios.get(url, {
-        params: {
-            login_id: email,
-            password: password,
-            nickname: name,
-            language: DEFAULT_LANG 
-        }
-    })
+    const params = {
+        login_id: email,
+        password: password,
+        nickname: name,
+        language: DEFAULT_LANG 
+    }
+    const response = await getClient.get(url, {params: params})
     handleErrorResponse(response)
     await storeAuthData({
         userId: response.data.userId,
@@ -24,13 +23,12 @@ export const signUp = async (name, email, password) => {
 
 export const signIn = async (email, password) => { 
     const url = BASE_URL.concat('/LoginCtrl/Login')
-    const response = await axios.get(url, {
-        params: { 
-            login_id: email,
-            password: password,
-            language: DEFAULT_LANG
-        }
-    })
+    const params = { 
+        login_id: email,
+        password: password,
+        language: DEFAULT_LANG
+    }
+    const response = await axios.get(url, {params: params})
     handleErrorResponse(response)
     await storeAuthData({
         userId: response.data.userId,
